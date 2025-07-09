@@ -45,3 +45,5 @@ mlruns/
 .vscode/
 .idea/
 *.swp
+.streamlit/secrets.toml
+
