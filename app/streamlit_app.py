@@ -61,10 +61,10 @@ def load_all_data_and_models():
     else:
         df_bytes = load_from_gcs("bike-data-bucket-ibtihel-2025", "comptage-velo-donnees-compteurs.csv")
         df = load_clean_data(df_bytes)
-        model_reg = load_model_from_gcs("bike-models-bucket", "regression/model.joblib")
-        encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/encoder.joblib")
-        model_clf = load_model_from_gcs("bike-models-bucket", "classification/model_classifier.joblib")
-        encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_classifier.joblib")
+        model_reg = load_model_from_gcs("bike-models-bucket", "regression/model_reg.joblib")
+        encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/encoder_reg.joblib")
+        model_clf = load_model_from_gcs("bike-models-bucket", "classification/model_clf.joblib")
+        encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_clf.joblib")
     return df, model_reg, encoder_reg, model_clf, encoder_clf
 
 df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
