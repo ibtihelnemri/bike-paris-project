@@ -47,28 +47,28 @@ def load_all_data_and_models():
     mode = os.getenv("MODE", "cloud")
     if mode == "local":
         df = load_clean_data("data/comptage_clean.parquet")
-        model_reg = joblib.load("model_reg.joblib")
-        encoder_reg = joblib.load("encoder_reg.joblib")
-        model_clf = joblib.load("model_clf.joblib")
-        encoder_clf = joblib.load("encoder_clf.joblib")
+        model_reg = joblib.load("model_new_reg.joblib")
+        encoder_reg = joblib.load("lablencoder_new_reg.joblib")
+        model_clf = joblib.load("model_new_clf.joblib")
+        encoder_clf = joblib.load("encoder_new_clf.joblib")
     else:
         print("loading data")
         df_bytes = load_from_gcs("bike-data-bucket-ibtihel-2025", "comptage_clean.parquet")
         print("loading df bytes")
         df = load_clean_data(df_bytes)
         print("loading df is done and start loading models")
-        #model_reg = load_model_from_gcs("bike-models-bucket", "regression/model_reg.joblib")
+        model_reg = load_model_from_gcs("bike-models-bucket", "regression/model_new_reg.joblib")
         print("loading first model is done")
-        #encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/encoder_reg.joblib")
-        #model_clf = load_model_from_gcs("bike-models-bucket", "classification/model_clf.joblib")
-        #encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_clf.joblib")
+        encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/lablencoder_new_reg.joblib")
+        model_clf = load_model_from_gcs("bike-models-bucket", "classification/model_new_clf.joblib")
+        encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_new_clf.joblib")
         print("loading models is done")
         
-    #return df, model_reg, encoder_reg, model_clf, encoder_clf
-    return df
+    return df, model_reg, encoder_reg, model_clf, encoder_clf
+    #return df
 
-#df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
-df = load_all_data_and_models()
+df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
+#df = load_all_data_and_models()
 df['hour'] = df['date_et_heure_de_comptage'].dt.hour
 df['weekday'] = df['date_et_heure_de_comptage'].dt.day_name()
 df['month'] = df['date_et_heure_de_comptage'].dt.month
@@ -514,7 +514,7 @@ elif section == "Demo":
     )
 
     st.markdown("This model predicts either the **number of bikes per hour** (regression) or a **crowding level** (classification) based on time and location inputs.")
-    '''
+    
     hour = st.slider("Hour of the day", 0, 23, 8)
     weekday = st.selectbox("Day of the week", encoder_reg.categories_[0])
     month = st.selectbox("Month", list(range(1, 13)))
@@ -542,4 +542,4 @@ elif section == "Demo":
 
     st.markdown("---")
     st.caption("Random Forest models trained on Open Data Paris bike counter data")
-    '''
+    
