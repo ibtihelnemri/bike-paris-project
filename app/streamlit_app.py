@@ -48,7 +48,7 @@ def load_all_data_and_models():
     if mode == "local":
         df = load_clean_data("data/comptage_clean.parquet")
         model_reg = joblib.load("model_new_reg.joblib")
-        encoder_reg = joblib.load("lablencoder_new_reg.joblib")
+        encoder_reg = joblib.load("labelencoder_new_reg.joblib")
         model_clf = joblib.load("model_new_clf.joblib")
         encoder_clf = joblib.load("encoder_new_clf.joblib")
     else:
@@ -59,7 +59,7 @@ def load_all_data_and_models():
         print("loading df is done and start loading models")
         model_reg = load_model_from_gcs("bike-models-bucket", "regression/model_new_reg.joblib")
         print("loading first model is done")
-        encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/lablencoder_new_reg.joblib")
+        encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/labelencoder_new_reg.joblib")
         model_clf = load_model_from_gcs("bike-models-bucket", "classification/model_new_clf.joblib")
         encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_new_clf.joblib")
         print("loading models is done")
