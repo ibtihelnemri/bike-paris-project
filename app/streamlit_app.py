@@ -36,30 +36,22 @@ def load_model_from_gcs(bucket, blob):
 @st.cache_data
 def load_clean_data(path):
     if isinstance(path, str):
-        df = pd.read_csv(path, sep=';')
+        df = pd.read_parquet(path)
     else:
-        df = pd.read_csv(BytesIO(path), sep=';')
-    df.columns = df.columns.str.strip().str.replace(' ', '_').str.lower()
-    df['date_et_heure_de_comptage'] = pd.to_datetime(df['date_et_heure_de_comptage'], utc=True).dt.tz_convert('Europe/Paris')
-    df['hour'] = df['date_et_heure_de_comptage'].dt.hour
-    df['weekday'] = df['date_et_heure_de_comptage'].dt.day_name()
-    df['month'] = df['date_et_heure_de_comptage'].dt.month
-    df[['latitude', 'longitude']] = df['coordonnées_géographiques'].str.split(',', expand=True).astype(float)
-    df = df.dropna(subset=['latitude', 'longitude'])
-    df['type_jour'] = df['weekday'].apply(lambda x: 'weekend' if x in ['Saturday', 'Sunday'] else 'weekday')  # <- ADD THIS
+        df = pd.read_parquet(BytesIO(path))
     return df
 
 @st.cache_resource
 def load_all_data_and_models():
     mode = os.getenv("MODE", "cloud")
     if mode == "local":
-        df = load_clean_data("data/comptage-velo-donnees-compteurs.csv")
-        model_reg = joblib.load("model.joblib")
-        encoder_reg = joblib.load("encoder.joblib")
-        model_clf = joblib.load("model_classifier.joblib")
-        encoder_clf = joblib.load("encoder_classifier.joblib")
+        df = load_clean_data("data/comptage_clean.parquet")
+        model_reg = joblib.load("model_reg.joblib")
+        encoder_reg = joblib.load("encoder_reg.joblib")
+        model_clf = joblib.load("model_clf.joblib")
+        encoder_clf = joblib.load("encoder_clf.joblib")
     else:
-        df_bytes = load_from_gcs("bike-data-bucket-ibtihel-2025", "comptage-velo-donnees-compteurs.csv")
+        df_bytes = load_from_gcs("bike-data-bucket-ibtihel-2025", "comptage_clean.parquet")
         df = load_clean_data(df_bytes)
         model_reg = load_model_from_gcs("bike-models-bucket", "regression/model_reg.joblib")
         encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/encoder_reg.joblib")
@@ -69,6 +61,11 @@ def load_all_data_and_models():
 
 df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
 
+df['hour'] = df['date_et_heure_de_comptage'].dt.hour
+df['weekday'] = df['date_et_heure_de_comptage'].dt.day_name()
+df['month'] = df['date_et_heure_de_comptage'].dt.month
+df[['latitude', 'longitude']] = df['coordonnées_géographiques'].str.split(',', expand=True).astype(float)
+df = df.dropna(subset=['latitude', 'longitude'])
 
 # -------------------------------
 # UI Navigation
