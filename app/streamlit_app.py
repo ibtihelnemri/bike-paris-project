@@ -23,30 +23,39 @@ except Exception as e:
 
 @st.cache_resource
 def load_from_gcs(bucket_name, blob_name):
-    #credentials = service_account.Credentials.from_service_account_file("app/key-gcp.json")
-    credentials_info = json.loads(st.secrets["GCP_KEY"])
-    #credentials_info = dict(st.secrets["GCP_KEY"])
-    credentials = service_account.Credentials.from_service_account_info(credentials_info)
-    client = storage.Client(credentials=credentials, project=credentials.project_id)
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(blob_name)
-    return blob.download_as_bytes()
+    try:
+        credentials = service_account.Credentials.from_service_account_info(credentials_info)
+        client = storage.Client(credentials=credentials, project=credentials.project_id)
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        return blob.download_as_bytes()
+    except Exception as e:
+        st.error("❌ Error during GCS file download")
+        st.code(str(e))
+        return None
 
+# Step 3: Load model from GCS
 @st.cache_resource
 def load_model_from_gcs(bucket, blob):
-    return joblib.load(BytesIO(load_from_gcs(bucket, blob)))
+    file_bytes = load_from_gcs(bucket, blob)
+    if file_bytes is not None:
+        try:
+            model = joblib.load(BytesIO(file_bytes))
+            return model
+        except Exception as e:
+            st.error("❌ Failed to load model with joblib")
+            st.code(str(e))
+            return None
+    return None
 
-def load_all_data_and_models():
-    try:
-        ...
-        print("✅ Starting to load models")
-        model_reg = load_model_from_gcs("bike-models-bucket", "regression/model_reg.joblib")
-        print("✅ Regression model loaded")
-        ...
-    except Exception as e:
-        print("❌ Failed to load models")
-        print(e)
-        raise e  # or st.error(str(e)) if inside app
-    
+# Step 4: Trigger model loading via button
+if st.button("🔄 Load Model from GCS"):
+    st.info("⏳ Attempting to load model from GCS...")
 
-    load_all_data_and_models()
+    model = load_model_from_gcs("bike-models-bucket", "regression/model_reg.joblib")
+
+    if model:
+        st.success("✅ Model loaded successfully!")
+        st.write(model)
+    else:
+        st.error("❌ Model loading failed. Check logs or file access.")
