@@ -64,7 +64,8 @@ def load_all_data_and_models():
         #encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_clf.joblib")
         print("loading models is done")
         
-    return df, model_reg, encoder_reg, model_clf, encoder_clf
+    #return df, model_reg, encoder_reg, model_clf, encoder_clf
+    return df
 
 #df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
 df = load_all_data_and_models()
