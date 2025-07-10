@@ -63,10 +63,11 @@ def load_all_data_and_models():
         #model_clf = load_model_from_gcs("bike-models-bucket", "classification/model_clf.joblib")
         #encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_clf.joblib")
         print("loading models is done")
+        
     return df, model_reg, encoder_reg, model_clf, encoder_clf
 
-df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
-
+#df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
+df = load_all_data_and_models()
 df['hour'] = df['date_et_heure_de_comptage'].dt.hour
 df['weekday'] = df['date_et_heure_de_comptage'].dt.day_name()
 df['month'] = df['date_et_heure_de_comptage'].dt.month
@@ -512,7 +513,7 @@ elif section == "Demo":
     )
 
     st.markdown("This model predicts either the **number of bikes per hour** (regression) or a **crowding level** (classification) based on time and location inputs.")
-
+    '''
     hour = st.slider("Hour of the day", 0, 23, 8)
     weekday = st.selectbox("Day of the week", encoder_reg.categories_[0])
     month = st.selectbox("Month", list(range(1, 13)))
@@ -540,3 +541,4 @@ elif section == "Demo":
 
     st.markdown("---")
     st.caption("Random Forest models trained on Open Data Paris bike counter data")
+    '''
