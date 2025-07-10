@@ -22,8 +22,8 @@ print(sys.path)
 @st.cache_resource
 def load_from_gcs(bucket_name, blob_name):
     #credentials = service_account.Credentials.from_service_account_file("app/key-gcp.json")
-    #credentials_info = json.loads(st.secrets["GCP_KEY"])
-    credentials_info = dict(st.secrets["GCP_KEY"])
+    credentials_info = json.loads(st.secrets["GCP_KEY"])
+    #credentials_info = dict(st.secrets["GCP_KEY"])
     credentials = service_account.Credentials.from_service_account_info(credentials_info)
     client = storage.Client(credentials=credentials, project=credentials.project_id)
     bucket = client.bucket(bucket_name)
