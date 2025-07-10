@@ -516,7 +516,7 @@ elif section == "Demo":
     st.markdown("This model predicts either the **number of bikes per hour** (regression) or a **crowding level** (classification) based on time and location inputs.")
     
     hour = st.slider("Hour of the day", 0, 23, 8)
-    weekday = st.selectbox("Day of the week", encoder_reg.categories_[0])
+    weekday = st.selectbox("Day of the week", encoder_reg.classes_)
     month = st.selectbox("Month", list(range(1, 13)))
 
     counters = df[['nom_du_compteur', 'latitude', 'longitude']].drop_duplicates()
