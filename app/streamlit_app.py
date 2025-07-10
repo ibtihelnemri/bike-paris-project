@@ -11,8 +11,6 @@ from google.cloud import storage
 from google.oauth2 import service_account
 from io import BytesIO
 import json
-import traceback
-
 
 # -------------------------------
 # Data and model loading
@@ -21,26 +19,15 @@ import traceback
 st.set_page_config(page_title="Bike Traffic Prediction", layout="wide")
 print(sys.path)
 
-def _panic(msg, exc):
-    st.error(f"❌ {msg}\n\n```{exc}```")
-    st.stop()
-
 @st.cache_resource
 def load_from_gcs(bucket_name, blob_name):
-    try:
-        cred_dict = json.loads(st.secrets["GCP_KEY"])
-        creds     = service_account.Credentials.from_service_account_info(cred_dict)
-    except Exception as e:
-        _panic("Could not read GCP credentials", traceback.format_exc())
-
-    try:
-        client  = storage.Client(credentials=creds, project=creds.project_id)
-        bucket  = client.bucket(bucket_name)
-        blob    = bucket.blob(blob_name)
-        return blob.download_as_bytes()
-    except Exception as e:
-        _panic(f"GCS error while fetching **{bucket_name}/{blob_name}**", traceback.format_exc())
-
+    #credentials = service_account.Credentials.from_service_account_file("app/key-gcp.json")
+    credentials_info = json.loads(st.secrets["GCP_KEY"])
+    credentials = service_account.Credentials.from_service_account_info(credentials_info)
+    client = storage.Client(credentials=credentials, project=credentials.project_id)
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    return blob.download_as_bytes()
 
 @st.cache_resource
 def load_model_from_gcs(bucket, blob):
