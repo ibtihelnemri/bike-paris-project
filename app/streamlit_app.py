@@ -47,3 +47,6 @@ def load_all_data_and_models():
         print("❌ Failed to load models")
         print(e)
         raise e  # or st.error(str(e)) if inside app
+    
+
+    load_all_data_and_models()
