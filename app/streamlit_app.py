@@ -51,12 +51,17 @@ def load_all_data_and_models():
         model_clf = joblib.load("model_clf.joblib")
         encoder_clf = joblib.load("encoder_clf.joblib")
     else:
+        print("loading data")
         df_bytes = load_from_gcs("bike-data-bucket-ibtihel-2025", "comptage_clean.parquet")
+        print("loading df bytes")
         df = load_clean_data(df_bytes)
+        print("loading df is done and start loading models")
         model_reg = load_model_from_gcs("bike-models-bucket", "regression/model_reg.joblib")
+        print("loading first model is done")
         encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/encoder_reg.joblib")
         model_clf = load_model_from_gcs("bike-models-bucket", "classification/model_clf.joblib")
         encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_clf.joblib")
+        print("loading models is done")
     return df, model_reg, encoder_reg, model_clf, encoder_clf
 
 df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
