@@ -1,0 +1,5 @@
+outs:
+- md5: 3c68cc1f35f1d26f5aea7928166e114b
+  size: 6598
+  hash: md5
+  path: liste_compteurs.csv

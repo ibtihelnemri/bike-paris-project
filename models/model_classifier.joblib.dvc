@@ -1,0 +1,5 @@
+outs:
+- md5: 2a51e784421832f7039b98ba5ec0c946
+  size: 1209082409
+  hash: md5
+  path: model_classifier.joblib
