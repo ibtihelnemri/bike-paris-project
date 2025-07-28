@@ -16,8 +16,9 @@ def main():
     df = prep.split_coordinates(df)
     df = prep.drop_columns(df)
     df = prep.final_cleaning(df)
-    compteurs = prep.lister_compteurs(df)
-    compteurs.to_csv("data/liste_compteurs.csv", index=False)
+    #compteurs = prep.lister_compteurs(df)
+    #compteurs.to_csv("data/liste_compteurs.csv", index=False)
+    #df.to_parquet("data/comptage_clean.parquet", index=False)
 
     print("Entraînement du modèle...")
     tm.run_pipeline(df)

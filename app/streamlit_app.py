@@ -47,10 +47,10 @@ def load_all_data_and_models():
     mode = os.getenv("MODE", "cloud")
     if mode == "local":
         df = load_clean_data("data/comptage_clean.parquet")
-        model_reg = joblib.load("model_new_reg.joblib")
-        encoder_reg = joblib.load("labelencoder_new_reg.joblib")
-        model_clf = joblib.load("model_new_clf.joblib")
-        encoder_clf = joblib.load("encoder_new_clf.joblib")
+        model_reg = joblib.load("model.joblib")
+        encoder_reg = joblib.load("encoder.joblib")
+        model_clf = joblib.load("model_classifier.joblib")
+        encoder_clf = joblib.load("encoder_classifier.joblib")
     else:
         print("loading data")
         df_bytes = load_from_gcs("bike-data-bucket-ibtihel-2025", "comptage_clean.parquet")
@@ -524,10 +524,16 @@ elif section == "Demo":
     selected = counters[counters['nom_du_compteur'] == counter_name].iloc[0]
     coords = np.array([selected['latitude'], selected['longitude']])
 
-    encoded_weekday_reg = encoder_reg.transform([[weekday]]).toarray()
-    X_input_reg = np.hstack((np.array([[hour, month, coords[0], coords[1]]]), encoded_weekday_reg))
+    encoded_weekday_reg = encoder_reg.transform([[weekday]]).reshape(-1, 1)
+    #X_input_reg = np.hstack((np.array([[hour, month, coords[0], coords[1]]]), encoded_weekday_reg))
+    #X_input_reg = np.hstack((np.array([[hour, month, coords[0], coords[1]]]), encoded_weekday_reg))
+    encoded_weekday = encoder_reg.transform([weekday])[0]
+    X_input_reg = np.array([[hour, month, coords[0], coords[1], encoded_weekday]], dtype='float32')
 
-    encoded_clf = encoder_clf.transform([[weekday, counter_name]]).toarray()
+
+
+    #encoded_clf = encoder_clf.transform([[weekday, counter_name]]).toarray()
+    encoded_clf = encoder_clf.transform(pd.DataFrame([[weekday, counter_name]], columns=["jour_semaine", "nom_du_compteur"])).toarray()
     X_input_clf = np.hstack((np.array([[hour, month]]), encoded_clf))
 
     if st.button("Predict"):

@@ -26,7 +26,7 @@ def drop_columns(df):
         'nom_du_site_de_comptage', 'lien_vers_photo_du_site_de_comptage',
         'identifiant_technique_compteur', 'id_photos', "date_d'installation_du_site_de_comptage",
         'test_lien_vers_photos_du_site_de_comptage_', 'id_photo_1',
-        'url_sites', 'type_dimage', 'coordonnées_géographiques'
+        'url_sites', 'type_dimage'
     ]
     return df.drop(columns=[col for col in colonnes_a_supprimer if col in df.columns])
 

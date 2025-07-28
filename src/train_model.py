@@ -88,4 +88,3 @@ def run_classifier_pipeline(df):
     joblib.dump(encoder, "encoder_classifier.joblib")
 
     return model
-
