@@ -11,6 +11,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 from io import BytesIO
 import json
+import requests
 
 # -------------------------------
 # Data and model loading
@@ -19,55 +20,32 @@ import json
 st.set_page_config(page_title="Bike Traffic Prediction", layout="wide")
 print(sys.path)
 
-@st.cache_resource
-def load_from_gcs(bucket_name, blob_name):
-    #credentials = service_account.Credentials.from_service_account_file("app/key-gcp.json")
-    credentials_info = json.loads(st.secrets["GCP_KEY"])
-    #credentials_info = dict(st.secrets["GCP_KEY"])
-    credentials = service_account.Credentials.from_service_account_info(credentials_info)
-    client = storage.Client(credentials=credentials, project=credentials.project_id)
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(blob_name)
-    return blob.download_as_bytes()
 
 @st.cache_resource
-def load_model_from_gcs(bucket, blob):
-    return joblib.load(BytesIO(load_from_gcs(bucket, blob)))
-
-@st.cache_data
-def load_clean_data(path):
-    if isinstance(path, str):
-        df = pd.read_parquet(path)
-    else:
-        df = pd.read_parquet(BytesIO(path))
-    return df
-
-@st.cache_resource
-def load_all_data_and_models():
+def load_data():
     mode = os.getenv("MODE", "cloud")
     if mode == "local":
-        df = load_clean_data("data/comptage_clean.parquet")
+        df= pd.read_parquet("data/comptage_clean.parquet")
+        df_counters = pd.read_csv("data/liste_compteurs.csv")
         model_reg = joblib.load("model.joblib")
         encoder_reg = joblib.load("encoder.joblib")
         model_clf = joblib.load("model_classifier.joblib")
         encoder_clf = joblib.load("encoder_classifier.joblib")
     else:
+        credentials_info = json.loads(st.secrets["GCP_KEY"])
+        credentials = service_account.Credentials.from_service_account_info(credentials_info)
+        client = storage.Client(credentials=credentials, project=credentials.project_id)
+
+        bucket = client.bucket("bike-data-bucket-ibtihel-2025")
         print("loading data")
-        df_bytes = load_from_gcs("bike-data-bucket-ibtihel-2025", "comptage_clean.parquet")
-        print("loading df bytes")
-        df = load_clean_data(df_bytes)
-        print("loading df is done and start loading models")
-        model_reg = load_model_from_gcs("bike-models-bucket", "regression/model_new_reg.joblib")
-        print("loading first model is done")
-        encoder_reg = load_model_from_gcs("bike-models-bucket", "regression/labelencoder_new_reg.joblib")
-        model_clf = load_model_from_gcs("bike-models-bucket", "classification/model_new_clf.joblib")
-        encoder_clf = load_model_from_gcs("bike-models-bucket", "classification/encoder_new_clf.joblib")
-        print("loading models is done")
+        df = pd.read_parquet(BytesIO(bucket.blob("comptage_clean.parquet").download_as_bytes()))
+        df_counters = pd.read_csv(BytesIO(bucket.blob("liste_compteurs.csv").download_as_bytes()))
+        print("loading data is done")
         
-    return df, model_reg, encoder_reg, model_clf, encoder_clf
+    return df
     #return df
 
-df, model_reg, encoder_reg, model_clf, encoder_clf = load_all_data_and_models()
+df = load_data()
 #df = load_all_data_and_models()
 df['hour'] = df['date_et_heure_de_comptage'].dt.hour
 df['weekday'] = df['date_et_heure_de_comptage'].dt.day_name()
@@ -506,7 +484,7 @@ We trained a **RandomForestClassifier** to detect high-traffic (crowded) conditi
 # -------------------------------
 elif section == "Demo":
     st.title("Live Prediction Demo")
-
+    api_url = st.secrets.get("API_URL", "https://bike-api-111973461276.europe-west1.run.app/predict")
     mode = st.radio(
         "Prediction type:",
         ["Hourly traffic (regression)", "Crowding (classification)"],
@@ -516,36 +494,44 @@ elif section == "Demo":
     st.markdown("This model predicts either the **number of bikes per hour** (regression) or a **crowding level** (classification) based on time and location inputs.")
     
     hour = st.slider("Hour of the day", 0, 23, 8)
-    weekday = st.selectbox("Day of the week", encoder_reg.classes_)
+    weekday = st.selectbox("Weekday", df["weekday"].unique())
     month = st.selectbox("Month", list(range(1, 13)))
 
     counters = df[['nom_du_compteur', 'latitude', 'longitude']].drop_duplicates()
     counter_name = st.selectbox("Counting location", counters['nom_du_compteur'])
     selected = counters[counters['nom_du_compteur'] == counter_name].iloc[0]
-    coords = np.array([selected['latitude'], selected['longitude']])
+    lat = selected['latitude']
+    lon = selected['longitude']
 
-    encoded_weekday_reg = encoder_reg.transform([[weekday]]).reshape(-1, 1)
-    #X_input_reg = np.hstack((np.array([[hour, month, coords[0], coords[1]]]), encoded_weekday_reg))
-    #X_input_reg = np.hstack((np.array([[hour, month, coords[0], coords[1]]]), encoded_weekday_reg))
-    encoded_weekday = encoder_reg.transform([weekday])[0]
-    X_input_reg = np.array([[hour, month, coords[0], coords[1], encoded_weekday]], dtype='float32')
-
-
-
-    #encoded_clf = encoder_clf.transform([[weekday, counter_name]]).toarray()
-    encoded_clf = encoder_clf.transform(pd.DataFrame([[weekday, counter_name]], columns=["jour_semaine", "nom_du_compteur"])).toarray()
-    X_input_clf = np.hstack((np.array([[hour, month]]), encoded_clf))
+    payload = {
+        "hour": hour,
+        "month": month,
+        "weekday": weekday,
+        "latitude": lat,
+        "longitude": lon,
+        "counter_name": counter_name,
+        "mode": "regression" if mode == "Hourly traffic (regression)" else "classification"
+    }
 
     if st.button("Predict"):
-        if mode == "Hourly traffic (regression)":
-            pred = model_reg.predict(X_input_reg)[0]
-            st.success(f"Prediction: **{pred:.0f} bikes/hour**")
-        else:
-            pred_proba = model_clf.predict_proba(X_input_clf)[0, 1]
-            pred_class = model_clf.predict(X_input_clf)[0]
-            label = "Crowded" if pred_class == 1 else "Low traffic"
-            st.success(f"Prediction: **{label}** (probability: {pred_proba:.2%})")
+        try:
+            response = requests.post(api_url, json=payload)
+            response.raise_for_status()
+            result = response.json()
+
+            if mode == "Hourly traffic (regression)":
+                pred = result.get("prediction")
+                st.success(f"Prediction: {int(pred)} bikes/hour")
+            else:
+                pred_class = result.get("prediction")
+                prob = result.get("probability", 0)
+                label = "Crowded" if pred_class == 1 else "Low traffic"
+                st.success(f"Prediction: {label} (probability: {prob:.2%})")
+
+        except Exception as e:
+            st.error(f"Error while contacting the API: {e}")
 
     st.markdown("---")
-    st.caption("Random Forest models trained on Open Data Paris bike counter data")
+    st.caption("Prediction results provided by the deployed FastAPI backend.")
+
     
