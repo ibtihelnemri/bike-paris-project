@@ -484,7 +484,7 @@ We trained a **RandomForestClassifier** to detect high-traffic (crowded) conditi
 # -------------------------------
 elif section == "Demo":
     st.title("Live Prediction Demo")
-    api_url = st.secrets.get("API_URL", "https://bike-api-111973461276.europe-west1.run.app/predict")
+    api_url = st.secrets["API_URL"]
     mode = st.radio(
         "Prediction type:",
         ["Hourly traffic (regression)", "Crowding (classification)"],
