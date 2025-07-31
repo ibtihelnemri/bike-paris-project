@@ -523,9 +523,8 @@ elif section == "Demo":
                 pred = result.get("prediction")
                 st.success(f"Prediction: {int(pred)} bikes/hour")
             else:
-                pred_class = result.get("prediction")
+                label = result.get("prediction", "Unknown")
                 prob = result.get("probability", 0)
-                label = "Crowded" if pred_class == 1 else "Low traffic"
                 st.success(f"Prediction: {label} (probability: {prob:.2%})")
 
         except Exception as e:
