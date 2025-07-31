@@ -507,8 +507,8 @@ elif section == "Demo":
         "hour": hour,
         "month": month,
         "weekday": weekday,
-        "latitude": lat,
-        "longitude": lon,
+        "lat": lat,
+        "lon": lon,
         "counter_name": counter_name,
         "mode": "regression" if mode == "Hourly traffic (regression)" else "classification"
     }
